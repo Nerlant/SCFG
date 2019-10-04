@@ -2,18 +2,19 @@
 
 #include "../not_implemented_exception.h"
 
+#include <vector>
+
 
 namespace SCFG::Type
 {
-	// template T with not implemented exception, so for each supported type they need to be specified
 	template<class T>
-	void SafeType(const T& value, char* file_location)
+	std::vector<char> SafeType(const T& value)
 	{
 		throw Exception::NotImplementedException();
 	}
 
 	template<class T>
-	T LoadType(char* data)
+	T LoadType(const char* data)
 	{
 		throw Exception::NotImplementedException();
 	}

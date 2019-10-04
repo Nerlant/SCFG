@@ -2,11 +2,12 @@
 
 #include "type.h"
 
+#include <vector>
+
 
 namespace SCFG::Type
 {
-	template<> void SafeType(const int& value, char* file_location);
+	template<> std::vector<char> SafeType(const int& value);
 
-	template<> int LoadType(char* data);
-	
+	template<> int LoadType(const char* data);
 }

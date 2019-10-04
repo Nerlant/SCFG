@@ -2,6 +2,7 @@
 
 #include <cstdint>
 
+
 struct Header
 {
 	uint8_t CharacteristicBytes[2];
