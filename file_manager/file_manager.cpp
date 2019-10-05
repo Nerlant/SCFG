@@ -8,7 +8,7 @@
 #include <filesystem>
 #include <algorithm>
 
-FileManager::FileManager(const std::string_view path) : filePath(path)
+SCFG::FileManager::FileManager(const std::string_view path) : filePath(path)
 {
 	if (!std::filesystem::exists(filePath))
 		throw std::runtime_error("FileManager::FileManager: Config file does not exist.");
@@ -16,7 +16,7 @@ FileManager::FileManager(const std::string_view path) : filePath(path)
 	Load();
 }
 
-void FileManager::OpenFile()
+void SCFG::FileManager::OpenFile()
 {
 	if (!fileStream.is_open())
 		fileStream.open(std::string(filePath), std::ios::in | std::ios::out | std::ios::binary);
@@ -25,13 +25,13 @@ void FileManager::OpenFile()
 		throw std::runtime_error("FileManager::OpenFile: Could not open config file.");
 }
 
-void FileManager::CloseFile()
+void SCFG::FileManager::CloseFile()
 {
 	if (fileStream.is_open())
 		fileStream.close();
 }
 
-void FileManager::Load()
+void SCFG::FileManager::Load()
 {
 	OpenFile();
 
@@ -45,7 +45,7 @@ void FileManager::Load()
 	CloseFile();
 }
 
-void FileManager::Safe()
+void SCFG::FileManager::Safe()
 {
 	OpenFile();
 
@@ -57,12 +57,12 @@ void FileManager::Safe()
 	CloseFile();
 }
 
-std::vector<char> FileManager::Read(const uintptr_t file_address, const size_t size)
+std::vector<char> SCFG::FileManager::Read(const uintptr_t file_address, const size_t size)
 {
 	return std::vector<char>(file.begin() + file_address, file.begin() + file_address + size);
 }
 
-void FileManager::Write(const uintptr_t file_address, const char* const data, const size_t size)
+void SCFG::FileManager::Write(const uintptr_t file_address, const char* const data, const size_t size)
 {
 	// Resize file if data goes beyond current file boundaries
 	if (file_address + size >= file.size())

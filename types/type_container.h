@@ -2,7 +2,6 @@
 
 #include "type_list.h"
 
-#include <functional>
 #include <utility>
 #include <vector>
 
@@ -13,8 +12,7 @@ namespace SCFG
 	class TypeContainer
 	{
 	public:
-		TypeContainer(const Type::List index, std::function<std::vector<char>(const T&)> safe_type,
-		              std::function<T(const char*)> load_type) :
+		TypeContainer(const Type::List index, Type::SafeType_t<T> safe_type, Type::LoadType_t<T> load_type) :
 			safeType(std::move(safe_type)), loadType(std::move(load_type)), value(), index(index)
 		{}
 
@@ -44,8 +42,8 @@ namespace SCFG
 		}
 
 	private:
-		std::function<std::vector<char>(const T&)> safeType;
-		std::function<T(const char*)> loadType;
+		Type::SafeType_t<T> safeType;
+		Type::LoadType_t<T> loadType;
 
 		T value;
 		Type::List index;

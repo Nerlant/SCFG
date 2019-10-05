@@ -3,10 +3,17 @@
 #include "../not_implemented_exception.h"
 
 #include <vector>
+#include <functional>
 
 
 namespace SCFG::Type
 {
+	template <class T>
+	using SafeType_t = std::function<std::vector<char>(const T&)>;
+
+	template <class T>
+	using LoadType_t = std::function<T(const char*)>;
+	
 	template<class T>
 	std::vector<char> SafeType(const T& value)
 	{
