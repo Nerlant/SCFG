@@ -1,31 +1,17 @@
 #pragma once
 
-#include "types/type.h"
 #include "types/type_list.h"
+#include "types/type_entry.h"
+#include "file_manager/file_manager.h"
+#include "profile/profile.h"
 
 #include <unordered_map>
 #include <string_view>
+#include <algorithm>
 
 
 namespace SCFG
 {
-	class TypeEntryBase
-	{
-	};
-	
-	template <class T>
-	class TypeEntry : public TypeEntryBase
-	{
-	public:
-		TypeEntry(size_t size, Type::LoadType_t<T> load_type, Type::SafeType_t<T> safe_type) :
-		Size(size), LoadType(std::move(load_type)), SafeType(std::move(safe_type))
-		{}
-		
-		size_t Size;
-		Type::LoadType_t<T> LoadType;
-		Type::SafeType_t<T> SafeType;
-	};
-	
 	class SCFG
 	{
 	public:
@@ -38,20 +24,52 @@ namespace SCFG
 
 		void LoadConfig();
 		void SaveProfile();
+		void SafeAsNewProfile(std::string_view name);
+
+		void WriteConfig();
+		void SafeConfig();
 
 		template<class T>
-		T GetValueByName(const std::string_view name);
+		T GetValueByName(const std::string_view name)
+		{
+			try
+			{
+				return profileMap.at(currentProfile).GetValueByName<T>(name);
+			}
+			catch (const std::exception&) // todo insert right exception type
+			{
+				// Insert new value in all profiles
+				for (auto& [key, profile] : profileMap)
+					profile.SetValue<T>(name, T{});
+
+				return T{};
+			}
+
+			return T();
+		}
 
 		template<class T>
-		void SetValue(const std::string_view key, const T& value);
+		void SetValue(const std::string_view key, const T& value)
+		{
+			if (profileMap.at(currentProfile).SetValue<T>(key, value))
+			{
+				profileStructure.push_back(key);
+				std::sort(profileStructure.begin(), profileStructure.end());
+				
+				// Insert new key with default value into all profiles
+				for (auto& [profileName, profile] : profileMap)
+					profile.SetValue(key, T{});
+			}
+		}
 
 	private:
+		std::vector<std::string_view> profileStructure;
 		std::unordered_map<Type::List, std::unique_ptr<TypeEntryBase>> typeMap;
+		std::unordered_map<std::string_view, Profile> profileMap;
+		FileManager fm;
+		std::string_view currentProfile;
 
-		// each profile must contain:
-		// map from name to index - maybe not needed but we need to safe the order how the values are saved somewhere (do we?)
-		// map from index to typeContainer
-		//
-		// maybe map from name to typeContainer is enough
+		void writeHeader();
+		void loadHeader();
 	};
 }

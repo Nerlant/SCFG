@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../not_implemented_exception.h"
+#include "../exceptions.h"
 
 #include <vector>
 #include <functional>
@@ -25,5 +25,4 @@ namespace SCFG::Type
 	{
 		throw Exception::NotImplementedException();
 	}
-	
 }
