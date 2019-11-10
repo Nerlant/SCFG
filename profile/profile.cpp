@@ -20,3 +20,9 @@ std::vector<char> SCFG::Profile::WriteProfile()
 
 	return data;
 }
+
+bool SCFG::Profile::getFieldFromCfg(const std::string_view name)
+{
+	// TODO: implement
+	throw Exception::NotImplementedException();
+}

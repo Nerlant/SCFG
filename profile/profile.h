@@ -28,16 +28,23 @@ namespace SCFG
 		template <class T>
 		T GetValueByName(const std::string_view name)
 		{
-			if (const auto val = valueMap.at(name).get())
-				return dynamic_cast<ValueContainer<T>*>(val)->GetValue();
+			try
+			{
+				return dynamic_cast<ValueContainer<T>*>(valueMap.at(name).get())->GetValue();
+			}
+			catch (const std::out_of_range& ex)
+			{
+				if (!getFieldFromCfg(name))
+					throw Exception::InvalidFieldNameException(ex.what());
+				
+				/* Get Value from cfg and cache it
+				*
+				* for that we need: the name list, access to the file manager
+				*/
 
-			/* Get Value from cfg and cache it
-			 *
-			 * for that we need: the name list, access to the file manager
-			 */
-			return T();
-
-			// throw exception if value not found
+				// Try again to get value
+				return GetValueByName<T>(name);
+			}
 		}
 
 		template <class T>
@@ -52,5 +59,7 @@ namespace SCFG
 		std::string_view profileName;
 		std::map<std::string_view, std::shared_ptr<ValueContainerBase>> valueMap;
 		SCFG& scfg;
+
+		bool getFieldFromCfg(const std::string_view name);
 	};
 }

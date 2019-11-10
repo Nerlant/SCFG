@@ -1,6 +1,5 @@
 #pragma once
 
-#include "type_list.h"
 #include "type.h"
 
 #include <utility>
@@ -21,8 +20,8 @@ namespace SCFG
 	class ValueContainer final : public ValueContainerBase
 	{
 	public:
-		explicit ValueContainer(const Type::List index) :	// TODO: is this type index needed?
-			value(), index(index)
+		explicit ValueContainer() :	// TODO: is this type index needed?
+			value()
 		{}
 
 		// TODO: make this properly
@@ -49,14 +48,8 @@ namespace SCFG
 			return value;
 		}
 
-		[[nodiscard]] Type::List GetTypeIndex() const
-		{
-			return index;
-		}
-
 	private:
 		T value;
-		Type::List index;
 		//std::vector<std::unique_ptr<ValueContainer>> childrenTypes;
 	};
 }

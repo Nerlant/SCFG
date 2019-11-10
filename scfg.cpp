@@ -2,14 +2,15 @@
 #include "header.h"
 #include "exceptions.h"
 
-constexpr uint32_t IMAGE_MAGIC = 0x47464353;
+constexpr uint32_t CFG_MAGIC = 0x47464353;
+constexpr uint8_t NAME_MAX_LENGTH = UINT8_MAX;
 
 SCFG::SCFG::SCFG(const std::string_view path) : fm(path) // TODO: add bool to create default config
 {
 	// Load cfg with file_manager
 	fm.Load();
 
-	typeMap.emplace(Type::List::Int, std::make_unique<TypeEntryBase>(TypeEntry<int>(4, Type::LoadType<int>, Type::SafeType<int>)));
+	//typeMap.emplace(Type::List::Int, std::make_unique<TypeEntryBase>(TypeEntry<int>(4, Type::LoadType<int>, Type::SafeType<int>)));
 
 	loadHeader();
 
@@ -39,7 +40,7 @@ void SCFG::SCFG::WriteConfig()
 	// TODO: write all profiles 
 }
 
-void SCFG::SCFG::SafeConfig()
+void SCFG::SCFG::SaveConfig()
 {
 	WriteConfig();
 	fm.Safe();
@@ -48,16 +49,22 @@ void SCFG::SCFG::SafeConfig()
 void SCFG::SCFG::writeHeader()
 {
 	const auto headerPtr = std::make_unique<Header>();
-	headerPtr->CharacteristicBytes = IMAGE_MAGIC;
-	headerPtr->NumberOfTypes = static_cast<int>(Type::List::TypeMax);
+	headerPtr->CharacteristicBytes = CFG_MAGIC;
+	headerPtr->NumberOfFields = static_cast<uint16_t>(typeMap.size());
 	fm.Write<Header>(0, *headerPtr);
 	
-	uint16_t i = 0;
-	for (auto&& [key, val] : typeMap)
-	{		
-		fm.Write<uint16_t>(6 + i * 4, i);
-		fm.Write<uint16_t>(8, val->GetSize());
-		i++;
+	auto fileOffset = sizeof(Header);
+	std::vector<char> name(NAME_MAX_LENGTH);
+	
+	for (auto&& [entryName, val] : typeMap)
+	{
+		std::fill(name.begin(), name.end(), '\0');
+		name.insert(name.begin(), entryName.begin(), entryName.end() - sizeof(char)); // Last character is '\0'
+		fm.Write(fileOffset, entryName.data(), entryName.size() + sizeof(char));
+		
+		fileOffset += entryName.size() + sizeof(char);
+		fm.Write<uint32_t>(fileOffset, val);
+		fileOffset += sizeof val;
 	}
 }
 
@@ -66,25 +73,44 @@ void SCFG::SCFG::loadHeader()
 	const auto headerPtr = std::make_unique<Header>();
 
 	headerPtr->CharacteristicBytes = fm.Read<int>(0);
-	if (headerPtr->CharacteristicBytes != IMAGE_MAGIC)
+	if (headerPtr->CharacteristicBytes != CFG_MAGIC)
 		throw Exception::InvalidConfigFileException();
 
-	headerPtr->NumberOfTypes = fm.Read<uint16_t>(4);
+	headerPtr->NumberOfFields = fm.Read<uint16_t>(4);
 
-	for (uint16_t i = 0; i < headerPtr->NumberOfTypes; i++)
+	auto fileOffset = sizeof(Header);
+	for (uint16_t i = 0; i < headerPtr->NumberOfFields; i++)
 	{
-		const auto typeIndex = static_cast<Type::List>(fm.Read<uint16_t>(6 + i * 4));
-		const auto typeSize = fm.Read<uint16_t>(8 + i * 4);
+		const std::string name(fm.Read(fileOffset, NAME_MAX_LENGTH).data());
+		fileOffset += name.size() + sizeof(char); // Add one for the null-character
 		
-		// Compare types to typeMap to detect type mismatches
-		try
-		{
-			if (typeMap.at(typeIndex)->GetSize() != typeSize)
-				throw Exception::TypeMismatchException();
-		}
-		catch (const std::out_of_range& ex)
-		{
-			throw Exception::InvalidTypeIndexException(ex.what());
-		}
+		const auto typeSize = fm.Read<uint32_t>(fileOffset);
+		fileOffset += sizeof typeSize;
+
+		// Store type name and type length to be able to later detect type mismatches
+		if (typeMap.contains(name))
+			throw Exception::DuplicateFieldNameException(name);
+		
+		typeMap.emplace(name, typeSize);
+	}
+}
+
+/// <summary>
+/// Checks the size of the type.
+/// Throws SizeMismatchException if field_size does not match.
+/// Throws InvalidFieldNameException if field_name does not exist.
+/// </summary>
+/// <param name="field_name">Name of the field.</param>
+/// <param name="field_size">Size of the field.</param>
+void SCFG::SCFG::checkTypeSize(const std::string_view field_name, const size_t field_size)
+{
+	try
+	{
+		if (typeMap.at(field_name.data()) != field_size)
+			throw Exception::SizeMismatchException();
+	}
+	catch (const std::out_of_range & ex)
+	{
+		throw Exception::InvalidFieldNameException(ex.what());
 	}
 }
