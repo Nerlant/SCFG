@@ -17,7 +17,7 @@ namespace SCFG
 		void CloseFile();
 
 		void Load();
-		void Safe();
+		void Save();
 
 		template<class T>
 		T Read(const uintptr_t file_offset)

@@ -23,7 +23,7 @@ namespace SCFG
 
 		void LoadConfig();
 		void SaveProfile();
-		void SafeAsNewProfile(std::string_view name);
+		void SafeAsNewProfile(const std::string& name);
 
 		void WriteConfig();
 		void SaveConfig();
@@ -50,7 +50,12 @@ namespace SCFG
 		template<class T>
 		void SetValue(const std::string_view key, const T& value)
 		{
-			checkTypeSize(key, sizeof(T));
+			try
+			{
+				checkTypeSize(key, sizeof(T));
+			}
+			// It is okay if the field does not exist so we ignore the exception
+			catch (const Exception::InvalidFieldNameException&) {}
 			
 			if (profileMap.at(currentProfile).SetValue<T>(key, value))
 			{
@@ -66,12 +71,17 @@ namespace SCFG
 	private:
 		std::vector<std::string_view> profileStructure;
 		std::map<std::string, uint32_t> typeMap;
-		std::unordered_map<std::string_view, Profile> profileMap;
+		std::unordered_map<std::string, Profile> profileMap;
 		FileManager fm;
-		std::string_view currentProfile;
+		std::string currentProfile;
 
 		void writeHeader();
+		size_t writeProfileMap(size_t offset, uint32_t profile_offset);
+		size_t writeTypeMap(size_t offset);
+		
 		void loadHeader();
+		size_t readProfileMap(uint16_t number_of_profiles, size_t offset);
+		size_t readTypeMap(uint16_t number_of_types, size_t offset);
 
 		void checkTypeSize(std::string_view field_name, size_t field_size);
 	};

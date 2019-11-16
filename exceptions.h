@@ -35,5 +35,11 @@ namespace SCFG::Exception
 	public:
 		explicit DuplicateFieldNameException(const std::string& duplicate_name) : std::runtime_error("Duplicate field name: " + duplicate_name) {}
 	};
+
+	class DuplicateProfileNameException final : public std::runtime_error
+	{
+	public:
+		explicit DuplicateProfileNameException(const std::string& duplicate_name) : std::runtime_error("Duplicate profile name: " + duplicate_name) {}
+	};
 	
 }

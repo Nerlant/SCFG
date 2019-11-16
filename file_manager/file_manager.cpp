@@ -45,7 +45,7 @@ void SCFG::FileManager::Load()
 	CloseFile();
 }
 
-void SCFG::FileManager::Safe()
+void SCFG::FileManager::Save()
 {
 	OpenFile();
 

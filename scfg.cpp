@@ -22,15 +22,15 @@ SCFG::SCFG::SCFG(const std::string_view path) : fm(path) // TODO: add bool to cr
 	// read first profile, if none exists, create a default one
 
 	//TODO remove
-	profileMap.emplace("p1", Profile("p1", *this));
-	currentProfile = "p1";
+	//profileMap.emplace("p1", Profile("p1", *this));
+	//currentProfile = "p1";
 }
 
 SCFG::SCFG::~SCFG()
 {
 }
 
-void SCFG::SCFG::SafeAsNewProfile(std::string_view name)
+void SCFG::SCFG::SafeAsNewProfile(const std::string& name)
 {
 	profileMap.emplace(name, profileMap.at(currentProfile));
 }
@@ -46,7 +46,7 @@ void SCFG::SCFG::WriteConfig()
 void SCFG::SCFG::SaveConfig()
 {
 	WriteConfig();
-	fm.Safe();
+	fm.Save();
 }
 
 void SCFG::SCFG::writeHeader()
@@ -57,20 +57,55 @@ void SCFG::SCFG::writeHeader()
 	headerPtr->NumberOfFields = static_cast<uint16_t>(typeMap.size());
 	fm.Write<Header>(0, *headerPtr);
 
-	// TODO: put in own function
-	auto fileOffset = sizeof(Header);
-	std::vector<char> name(NAME_MAX_LENGTH);
+	auto offset = sizeof(Header);
+	for (const auto& [profileName, profile] : profileMap)
+		offset += profileName.size() + sizeof(char) + sizeof(uint32_t);
 	
-	for (auto&& [entryName, val] : typeMap)
+	const auto firstProfileOffset = static_cast<uint32_t>(writeTypeMap(offset));
+	writeProfileMap(sizeof(Header), firstProfileOffset);
+}
+
+size_t SCFG::SCFG::writeProfileMap(size_t offset, uint32_t profile_offset)
+{
+	std::vector<char> name(NAME_MAX_LENGTH);
+
+	for (const auto& [profileName, profile] : profileMap)
 	{
 		std::fill(name.begin(), name.end(), '\0');
-		name.insert(name.begin(), entryName.begin(), entryName.end() - sizeof(char)); // Last character is '\0'
-		fm.Write(fileOffset, entryName.data(), entryName.size() + sizeof(char));
+		name.insert(name.begin(), profileName.begin(), profileName.end());
 		
-		fileOffset += entryName.size() + sizeof(char);
-		fm.Write<uint32_t>(fileOffset, val);
-		fileOffset += sizeof val;
+		fm.Write(offset, name.data(), profileName.size() + sizeof(char));
+		offset += profileName.size() + sizeof(char);
+
+		fm.Write(offset, profile_offset);
+		offset += sizeof profile_offset;
+
+		// TODO: own function?: size_t writeProfile(uint32_t offset, const Profile& profile);
+		const auto profileData = profile.WriteProfile();
+		fm.Write(profile_offset, profileData.data(), profileData.size());
+		profile_offset += static_cast<uint32_t>(profileData.size());
 	}
+
+	return offset;
+}
+
+size_t SCFG::SCFG::writeTypeMap(size_t offset)
+{	
+	std::vector<char> name(NAME_MAX_LENGTH);
+
+	for (const auto& [entryName, val] : typeMap)
+	{
+		std::fill(name.begin(), name.end(), '\0');
+		name.insert(name.begin(), entryName.begin(), entryName.end());
+		
+		fm.Write(offset, name.data(), entryName.size() + sizeof(char));
+		offset += entryName.size() + sizeof(char);
+		
+		fm.Write<uint32_t>(offset, val);
+		offset += sizeof val;
+	}
+
+	return offset;
 }
 
 void SCFG::SCFG::loadHeader()
@@ -84,31 +119,56 @@ void SCFG::SCFG::loadHeader()
 	headerPtr->NumberOfProfiles = fm.Read<uint16_t>(4);
 	headerPtr->NumberOfFields = fm.Read<uint16_t>(6);
 
-	// TODO: put in own function
-	auto fileOffset = sizeof(Header);
-	for (uint16_t i = 0; i < headerPtr->NumberOfFields; i++)
+	const auto offset = readProfileMap(headerPtr->NumberOfProfiles, sizeof(Header));
+	readTypeMap(headerPtr->NumberOfFields, offset);
+}
+
+size_t SCFG::SCFG::readProfileMap(const uint16_t number_of_profiles, size_t offset)
+{
+	for (uint16_t i = 0; i < number_of_profiles; i++)
 	{
-		const std::string name(fm.Read(fileOffset, NAME_MAX_LENGTH).data());
-		fileOffset += name.size() + sizeof(char); // Add one for the null-character
-		
-		const auto typeSize = fm.Read<uint32_t>(fileOffset);
-		fileOffset += sizeof typeSize;
+		const std::string name(fm.Read(offset, NAME_MAX_LENGTH).data());
+		offset += name.size() + sizeof(char); // Add one for the null-character
+
+		const auto fileOffset = fm.Read<uint32_t>(offset);
+		offset += sizeof fileOffset;
+
+		if (profileMap.contains(name))
+			throw Exception::DuplicateProfileNameException(name);
+
+		profileMap.emplace(name, Profile(name, fileOffset, *this));
+	}
+
+	return offset;
+}
+
+size_t SCFG::SCFG::readTypeMap(const uint16_t number_of_types, size_t offset)
+{
+	for (uint16_t i = 0; i < number_of_types; i++)
+	{
+		const std::string name(fm.Read(offset, NAME_MAX_LENGTH).data());
+		offset += name.size() + sizeof(char); // Add one for the null-character
+
+		const auto typeSize = fm.Read<uint32_t>(offset);
+		offset += sizeof typeSize;
 
 		// Store type name and type length to be able to later detect type mismatches
 		if (typeMap.contains(name))
 			throw Exception::DuplicateFieldNameException(name);
-		
+
 		typeMap.emplace(name, typeSize);
 	}
+
+	return offset;
 }
 
-/// <summary>
-/// Checks the size of the type.
-/// Throws SizeMismatchException if field_size does not match.
-/// Throws InvalidFieldNameException if field_name does not exist.
-/// </summary>
-/// <param name="field_name">Name of the field.</param>
-/// <param name="field_size">Size of the field.</param>
+/**
+ * \brief Check the size of the type.
+ * \param field_name Name of the field.
+ * \param field_size Size of the field.
+ * \throws SizeMismatchException if field_size does not match.
+ * \throws InvalidFieldNameException if field_name does not exist.
+ */
 void SCFG::SCFG::checkTypeSize(const std::string_view field_name, const size_t field_size)
 {
 	try

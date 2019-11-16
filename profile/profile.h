@@ -23,7 +23,7 @@ namespace SCFG
 	{
 		// Needs to contain all the settings
 	public:
-		explicit Profile(std::string_view name, SCFG& scfg);
+		explicit Profile(std::string_view name, size_t file_offset, SCFG& scfg); // TODO: can this be a const SCFG& ?
 
 		template <class T>
 		T GetValueByName(const std::string_view name)
@@ -53,11 +53,12 @@ namespace SCFG
 			return valueMap.emplace(name, std::make_shared<ValueContainer<T>>(value)).second;
 		}
 
-		std::vector<char> WriteProfile();
+		std::vector<char> WriteProfile() const;
 
 	private:
-		std::string_view profileName;
+		std::string profileName;
 		std::map<std::string_view, std::shared_ptr<ValueContainerBase>> valueMap;
+		size_t fileOffset;
 		SCFG& scfg;
 
 		bool getFieldFromCfg(const std::string_view name);
