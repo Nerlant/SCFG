@@ -12,7 +12,7 @@ namespace SCFG
 	{
 	public:
 		virtual ~ValueContainerBase() = default;
-		virtual std::vector<char> Safe() = 0;
+		virtual std::vector<char> Save() = 0;
 		virtual void Load(char* data) = 0;
 	};
 	
@@ -20,8 +20,7 @@ namespace SCFG
 	class ValueContainer final : public ValueContainerBase
 	{
 	public:
-		explicit ValueContainer() :	// TODO: is this type index needed?
-			value()
+		explicit ValueContainer() : value()
 		{}
 
 		// TODO: make this properly
@@ -33,9 +32,9 @@ namespace SCFG
 		//	childrenTypes.push_back(children);
 		//}
 
-		std::vector<char> Safe() override
+		std::vector<char> Save() override
 		{
-			return Type::SafeType<T>(value);
+			return Type::SaveType<T>(value);
 		}
 
 		void Load(char* data) override

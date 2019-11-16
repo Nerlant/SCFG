@@ -7,7 +7,7 @@
 
 namespace SCFG::Type
 {
-	template<> std::vector<char> SafeType(const int& value);
+	template<> std::vector<char> SaveType(const int& value);
 
 	template<> int LoadType(const char* data);
 }

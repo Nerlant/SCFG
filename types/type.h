@@ -15,7 +15,7 @@ namespace SCFG::Type
 	using LoadType_t = std::function<T(const char*)>;
 	
 	template<class T>
-	std::vector<char> SafeType(const T& value)
+	std::vector<char> SaveType(const T& value)
 	{
 		throw Exception::NotImplementedException();
 	}

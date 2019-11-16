@@ -4,7 +4,7 @@
 
 
 template <>
-std::vector<char> SCFG::Type::SafeType<int>(const int& value)
+std::vector<char> SCFG::Type::SaveType<int>(const int& value)
 {
 	std::vector<char> data(4);
 	std::memcpy(data.data(), &value, 4);

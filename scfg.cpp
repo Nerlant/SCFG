@@ -10,9 +10,12 @@ SCFG::SCFG::SCFG(const std::string_view path) : fm(path) // TODO: add bool to cr
 	// Load cfg with file_manager
 	fm.Load();
 
-	//typeMap.emplace(Type::List::Int, std::make_unique<TypeEntryBase>(TypeEntry<int>(4, Type::LoadType<int>, Type::SafeType<int>)));
+	//typeMap.emplace(Type::List::Int, std::make_unique<TypeEntryBase>(TypeEntry<int>(4, Type::LoadType<int>, Type::SaveType<int>)));
 
 	loadHeader();
+
+	// TODO: add number of profiles to header
+	// maybe put profile name as list behind number - maybe add file offset (to profile?)
 
 	// read name list
 	
@@ -50,9 +53,11 @@ void SCFG::SCFG::writeHeader()
 {
 	const auto headerPtr = std::make_unique<Header>();
 	headerPtr->CharacteristicBytes = CFG_MAGIC;
+	headerPtr->NumberOfProfiles = static_cast<uint16_t>(profileMap.size());
 	headerPtr->NumberOfFields = static_cast<uint16_t>(typeMap.size());
 	fm.Write<Header>(0, *headerPtr);
-	
+
+	// TODO: put in own function
 	auto fileOffset = sizeof(Header);
 	std::vector<char> name(NAME_MAX_LENGTH);
 	
@@ -76,8 +81,10 @@ void SCFG::SCFG::loadHeader()
 	if (headerPtr->CharacteristicBytes != CFG_MAGIC)
 		throw Exception::InvalidConfigFileException();
 
-	headerPtr->NumberOfFields = fm.Read<uint16_t>(4);
+	headerPtr->NumberOfProfiles = fm.Read<uint16_t>(4);
+	headerPtr->NumberOfFields = fm.Read<uint16_t>(6);
 
+	// TODO: put in own function
 	auto fileOffset = sizeof(Header);
 	for (uint16_t i = 0; i < headerPtr->NumberOfFields; i++)
 	{

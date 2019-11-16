@@ -16,7 +16,7 @@ namespace SCFG
 	struct Header
 	{
 		uint32_t CharacteristicBytes;
+		uint16_t NumberOfProfiles;
 		uint16_t NumberOfFields;
-		uint16_t Options;
 	};
 }

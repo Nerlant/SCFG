@@ -12,7 +12,7 @@ std::vector<char> SCFG::Profile::WriteProfile()
 
 	for (const auto& [key, typeContainer] : valueMap)
 	{
-		const auto currentData = typeContainer->Safe();
+		const auto currentData = typeContainer->Save();
 		data.insert(data.end(), 
 			std::make_move_iterator(currentData.begin()), 
 			std::make_move_iterator(currentData.end()));
