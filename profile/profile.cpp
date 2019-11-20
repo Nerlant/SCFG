@@ -5,7 +5,7 @@
 SCFG::Profile::Profile(const std::string_view name, const size_t file_offset, SCFG& scfg) : profileName(name), fileOffset(file_offset), scfg(scfg)
 {}
 
-std::vector<char> SCFG::Profile::WriteProfile() const
+std::vector<char> SCFG::Profile::GetData() const
 {
 	std::vector<char> data;
 	for (const auto& [key, typeContainer] : valueMap)

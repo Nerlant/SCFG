@@ -53,7 +53,7 @@ namespace SCFG
 			return valueMap.emplace(name, std::make_shared<ValueContainer<T>>(value)).second;
 		}
 
-		std::vector<char> WriteProfile() const;
+		[[nodiscard]] std::vector<char> GetData() const;
 
 	private:
 		std::string profileName;

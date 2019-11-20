@@ -77,6 +77,7 @@ namespace SCFG
 
 		void writeHeader();
 		size_t writeProfileMap(size_t offset, uint32_t profile_offset);
+		size_t writeProfile(size_t offset, const Profile& profile);
 		size_t writeTypeMap(size_t offset);
 		
 		void loadHeader();

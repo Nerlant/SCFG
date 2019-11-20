@@ -32,7 +32,7 @@ namespace SCFG
 		{
 			Write(file_offset, reinterpret_cast<const char*>(&value), sizeof(T));
 		}
-		// TODO: maybe convert this to private function
+
 		void Write(uintptr_t file_address, const char* data, size_t size);
 
 	private:

@@ -10,15 +10,7 @@ SCFG::SCFG::SCFG(const std::string_view path) : fm(path) // TODO: add bool to cr
 	// Load cfg with file_manager
 	fm.Load();
 
-	//typeMap.emplace(Type::List::Int, std::make_unique<TypeEntryBase>(TypeEntry<int>(4, Type::LoadType<int>, Type::SaveType<int>)));
-
 	loadHeader();
-
-	// TODO: add number of profiles to header
-	// maybe put profile name as list behind number - maybe add file offset (to profile?)
-
-	// read name list
-	
 	// read first profile, if none exists, create a default one
 
 	//TODO remove
@@ -39,8 +31,13 @@ void SCFG::SCFG::WriteConfig()
 {
 	writeHeader();
 
-	// TODO: write profile structure
-	// TODO: write all profiles 
+	auto offset = sizeof(Header);
+	// Calculate size of profile list in file
+	for (const auto& [profileName, profile] : profileMap)
+		offset += profileName.size() + sizeof(char) + sizeof(uint32_t);
+
+	const auto firstProfileOffset = static_cast<uint32_t>(writeTypeMap(offset));
+	writeProfileMap(sizeof(Header), firstProfileOffset);
 }
 
 void SCFG::SCFG::SaveConfig()
@@ -56,13 +53,6 @@ void SCFG::SCFG::writeHeader()
 	headerPtr->NumberOfProfiles = static_cast<uint16_t>(profileMap.size());
 	headerPtr->NumberOfFields = static_cast<uint16_t>(typeMap.size());
 	fm.Write<Header>(0, *headerPtr);
-
-	auto offset = sizeof(Header);
-	for (const auto& [profileName, profile] : profileMap)
-		offset += profileName.size() + sizeof(char) + sizeof(uint32_t);
-	
-	const auto firstProfileOffset = static_cast<uint32_t>(writeTypeMap(offset));
-	writeProfileMap(sizeof(Header), firstProfileOffset);
 }
 
 size_t SCFG::SCFG::writeProfileMap(size_t offset, uint32_t profile_offset)
@@ -80,13 +70,17 @@ size_t SCFG::SCFG::writeProfileMap(size_t offset, uint32_t profile_offset)
 		fm.Write(offset, profile_offset);
 		offset += sizeof profile_offset;
 
-		// TODO: own function?: size_t writeProfile(uint32_t offset, const Profile& profile);
-		const auto profileData = profile.WriteProfile();
-		fm.Write(profile_offset, profileData.data(), profileData.size());
-		profile_offset += static_cast<uint32_t>(profileData.size());
+		profile_offset += static_cast<uint32_t>(writeProfile(profile_offset, profile));
 	}
 
 	return offset;
+}
+
+size_t SCFG::SCFG::writeProfile(const size_t offset, const Profile& profile)
+{
+	const auto profileData = profile.GetData();
+	fm.Write(offset, profileData.data(), profileData.size());
+	return profileData.size();
 }
 
 size_t SCFG::SCFG::writeTypeMap(size_t offset)
