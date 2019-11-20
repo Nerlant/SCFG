@@ -16,6 +16,7 @@ SCFG::SCFG::SCFG(const std::string_view path) : fm(path) // TODO: add bool to cr
 	//TODO remove
 	//profileMap.emplace("p1", Profile("p1", *this));
 	//currentProfile = "p1";
+	currentProfile = "est12";
 }
 
 SCFG::SCFG::~SCFG()
@@ -130,7 +131,7 @@ size_t SCFG::SCFG::readProfileMap(const uint16_t number_of_profiles, size_t offs
 		if (profileMap.contains(name))
 			throw Exception::DuplicateProfileNameException(name);
 
-		profileMap.emplace(name, Profile(name, fileOffset, *this));
+		profileMap.emplace(name, Profile(name, fileOffset, fm, typeMap));
 	}
 
 	return offset;

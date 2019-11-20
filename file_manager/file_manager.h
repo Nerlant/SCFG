@@ -25,7 +25,7 @@ namespace SCFG
 			return *reinterpret_cast<T*>(Read(file_offset, sizeof(T)).data());
 		}
 		// TODO: maybe convert this to private function
-		std::vector<char>Read(uintptr_t file_address, size_t size);
+		[[nodiscard]] std::vector<char>Read(uintptr_t file_address, size_t size) const;
 
 		template<class T>
 		void Write(const uintptr_t file_offset, const T& value)

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "types/type_entry.h"
 #include "file_manager/file_manager.h"
 #include "profile/profile.h"
 
@@ -59,8 +58,7 @@ namespace SCFG
 			
 			if (profileMap.at(currentProfile).SetValue<T>(key, value))
 			{
-				profileStructure.push_back(key);
-				std::sort(profileStructure.begin(), profileStructure.end());
+				typeMap.emplace(key, static_cast<uint32_t>(sizeof(T)));
 				
 				// Insert new key with default value into all profiles
 				for (auto& [profileName, profile] : profileMap)
@@ -68,8 +66,26 @@ namespace SCFG
 			}
 		}
 
+
+		/**
+		 * \brief INTERNAL USAGE
+		 * \return Const reference to the file manager used by the scfg instance
+		 */
+		[[nodiscard]] const auto& GetTypeMap() const
+		{
+			return typeMap;
+		}
+
+		/**
+		* \brief INTERNAL USAGE
+		* \return Const reference to the file manager used by the scfg instance
+		*/
+		[[nodiscard]] const auto& GetFileManager() const
+		{
+			return fm;
+		}
+
 	private:
-		std::vector<std::string_view> profileStructure;
 		std::map<std::string, uint32_t> typeMap;
 		std::unordered_map<std::string, Profile> profileMap;
 		FileManager fm;

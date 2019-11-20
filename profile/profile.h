@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../types/value_container.h"
+#include "../file_manager/file_manager.h"
+#include "../exceptions.h"
 
 #include <vector>
 #include <memory>
@@ -17,13 +19,11 @@
 
 namespace SCFG
 {
-	class SCFG;
-	
 	class Profile
 	{
 		// Needs to contain all the settings
 	public:
-		explicit Profile(std::string_view name, size_t file_offset, SCFG& scfg); // TODO: can this be a const SCFG& ?
+		explicit Profile(std::string_view name, size_t file_offset, const FileManager& file_manager, const std::map<std::string, uint32_t>& type_map); // TODO: can this be a const SCFG& ?
 
 		template <class T>
 		T GetValueByName(const std::string_view name)
@@ -34,7 +34,7 @@ namespace SCFG
 			}
 			catch (const std::out_of_range& ex)
 			{
-				if (!getFieldFromCfg(name))
+				if (!getFieldFromCfg<T>(name))
 					throw Exception::InvalidFieldNameException(ex.what());
 				
 				/* Get Value from cfg and cache it
@@ -59,8 +59,33 @@ namespace SCFG
 		std::string profileName;
 		std::map<std::string_view, std::shared_ptr<ValueContainerBase>> valueMap;
 		size_t fileOffset;
-		SCFG& scfg;
+		const FileManager& fileManager;
+		const std::map<std::string, uint32_t>& typeMap;
 
-		bool getFieldFromCfg(const std::string_view name);
+		template <class T>
+		bool getFieldFromCfg(const std::string_view name)
+		{
+			auto fieldFileOffset = fileOffset;
+			size_t fieldFileSize = 0;
+			for (const auto& [curName, size] : typeMap)
+			{
+				if (curName == name)
+				{
+					fieldFileSize = size;
+					break;
+				}
+
+				fieldFileOffset += size;
+			}
+
+			if (!fieldFileSize)
+				throw Exception::InvalidFieldNameException(std::string(name));
+
+			const auto fieldData = fileManager.Read(fieldFileOffset, fieldFileSize);
+			T value;
+			std::copy(fieldData.begin(), fieldData.end(), &value);
+
+			return SetValue(name, value);
+		}
 	};
 }

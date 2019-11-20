@@ -57,7 +57,7 @@ void SCFG::FileManager::Save()
 	CloseFile();
 }
 
-std::vector<char> SCFG::FileManager::Read(const uintptr_t file_address, const size_t size)
+std::vector<char> SCFG::FileManager::Read(const uintptr_t file_address, const size_t size) const
 {
 	return std::vector<char>(file.begin() + file_address, file.begin() + file_address + size);
 }

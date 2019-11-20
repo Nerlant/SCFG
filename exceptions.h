@@ -27,7 +27,7 @@ namespace SCFG::Exception
 	class InvalidFieldNameException final : public std::runtime_error
 	{
 	public:
-		explicit InvalidFieldNameException(const std::string& exception_msg) : std::runtime_error("Type index is out of range: " + exception_msg) {}
+		explicit InvalidFieldNameException(const std::string& exception_msg) : std::runtime_error("Invalid field name: " + exception_msg) {}
 	};
 
 	class DuplicateFieldNameException final : public std::runtime_error
