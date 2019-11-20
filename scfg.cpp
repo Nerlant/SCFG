@@ -2,6 +2,8 @@
 #include "header.h"
 #include "exceptions.h"
 
+#include <memory>
+
 constexpr uint32_t CFG_MAGIC = 0x47464353;
 constexpr uint8_t NAME_MAX_LENGTH = UINT8_MAX;
 
@@ -10,12 +12,10 @@ SCFG::SCFG::SCFG(const std::string_view path) : fm(path) // TODO: add bool to cr
 	// Load cfg with file_manager
 	fm.Load();
 
-	loadHeader();
+	LoadConfig();
+	
 	// read first profile, if none exists, create a default one
 
-	//TODO remove
-	//profileMap.emplace("p1", Profile("p1", *this));
-	//currentProfile = "p1";
 	currentProfile = "est12";
 }
 
@@ -23,7 +23,15 @@ SCFG::SCFG::~SCFG()
 {
 }
 
-void SCFG::SCFG::SafeAsNewProfile(const std::string& name)
+void SCFG::SCFG::LoadConfig()
+{
+	const auto headerPtr = loadHeader();
+
+	const auto offset = readProfileMap(headerPtr->NumberOfProfiles, sizeof(Header));
+	readTypeMap(headerPtr->NumberOfFields, offset);
+}
+
+void SCFG::SCFG::SafeAsNewProfile(std::string_view name)
 {
 	profileMap.emplace(name, profileMap.at(currentProfile));
 }
@@ -103,9 +111,9 @@ size_t SCFG::SCFG::writeTypeMap(size_t offset)
 	return offset;
 }
 
-void SCFG::SCFG::loadHeader()
+std::unique_ptr<SCFG::Header> SCFG::SCFG::loadHeader() const
 {
-	const auto headerPtr = std::make_unique<Header>();
+	auto headerPtr = std::make_unique<Header>();
 
 	headerPtr->CharacteristicBytes = fm.Read<int>(0);
 	if (headerPtr->CharacteristicBytes != CFG_MAGIC)
@@ -114,8 +122,7 @@ void SCFG::SCFG::loadHeader()
 	headerPtr->NumberOfProfiles = fm.Read<uint16_t>(4);
 	headerPtr->NumberOfFields = fm.Read<uint16_t>(6);
 
-	const auto offset = readProfileMap(headerPtr->NumberOfProfiles, sizeof(Header));
-	readTypeMap(headerPtr->NumberOfFields, offset);
+	return headerPtr;
 }
 
 size_t SCFG::SCFG::readProfileMap(const uint16_t number_of_profiles, size_t offset)
@@ -131,7 +138,7 @@ size_t SCFG::SCFG::readProfileMap(const uint16_t number_of_profiles, size_t offs
 		if (profileMap.contains(name))
 			throw Exception::DuplicateProfileNameException(name);
 
-		profileMap.emplace(name, Profile(name, fileOffset, fm, typeMap));
+		profileMap.emplace(name, Profile(fileOffset, fm, typeMap));
 	}
 
 	return offset;
@@ -166,13 +173,9 @@ size_t SCFG::SCFG::readTypeMap(const uint16_t number_of_types, size_t offset)
  */
 void SCFG::SCFG::checkTypeSize(const std::string_view field_name, const size_t field_size)
 {
-	try
-	{
-		if (typeMap.at(field_name.data()) != field_size)
-			throw Exception::SizeMismatchException();
-	}
-	catch (const std::out_of_range & ex)
-	{
-		throw Exception::InvalidFieldNameException(ex.what());
-	}
+	const auto pair = typeMap.find(field_name);
+	if (pair == typeMap.end())
+		throw Exception::InvalidFieldNameException(std::string(field_name));
+	if (pair->second != field_size)
+		throw Exception::SizeMismatchException();
 }

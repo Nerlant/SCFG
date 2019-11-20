@@ -3,8 +3,8 @@
 #include "../file_manager/file_manager.h"
 
 
-SCFG::Profile::Profile(const std::string_view name, size_t file_offset, const FileManager& file_manager, const std::map<std::string, uint32_t>& type_map)
-	: profileName(name), fileOffset(file_offset), fileManager(file_manager), typeMap(type_map)
+SCFG::Profile::Profile(const size_t file_offset, const FileManager& file_manager, const std::map<std::string, uint32_t, std::less<>>& type_map)
+	: fileOffset(file_offset), fileManager(file_manager), typeMap(type_map)
 {
 }
 

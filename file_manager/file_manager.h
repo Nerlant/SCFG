@@ -20,11 +20,11 @@ namespace SCFG
 		void Save();
 
 		template<class T>
-		T Read(const uintptr_t file_offset)
+		[[nodiscard]] T Read(const uintptr_t file_offset) const
 		{
 			return *reinterpret_cast<T*>(Read(file_offset, sizeof(T)).data());
 		}
-		// TODO: maybe convert this to private function
+
 		[[nodiscard]] std::vector<char>Read(uintptr_t file_address, size_t size) const;
 
 		template<class T>

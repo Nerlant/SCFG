@@ -2,10 +2,11 @@
 
 #include "file_manager/file_manager.h"
 #include "profile/profile.h"
+#include "header.h"
 
 #include <unordered_map>
 #include <string_view>
-#include <algorithm>
+#include <memory>
 
 
 namespace SCFG
@@ -22,7 +23,7 @@ namespace SCFG
 
 		void LoadConfig();
 		void SaveProfile();
-		void SafeAsNewProfile(const std::string& name);
+		void SafeAsNewProfile(std::string_view name);
 
 		void WriteConfig();
 		void SaveConfig();
@@ -66,27 +67,8 @@ namespace SCFG
 			}
 		}
 
-
-		/**
-		 * \brief INTERNAL USAGE
-		 * \return Const reference to the file manager used by the scfg instance
-		 */
-		[[nodiscard]] const auto& GetTypeMap() const
-		{
-			return typeMap;
-		}
-
-		/**
-		* \brief INTERNAL USAGE
-		* \return Const reference to the file manager used by the scfg instance
-		*/
-		[[nodiscard]] const auto& GetFileManager() const
-		{
-			return fm;
-		}
-
 	private:
-		std::map<std::string, uint32_t> typeMap;
+		std::map<std::string, uint32_t, std::less<>> typeMap;
 		std::unordered_map<std::string, Profile> profileMap;
 		FileManager fm;
 		std::string currentProfile;
@@ -96,7 +78,7 @@ namespace SCFG
 		size_t writeProfile(size_t offset, const Profile& profile);
 		size_t writeTypeMap(size_t offset);
 		
-		void loadHeader();
+		std::unique_ptr<Header> loadHeader() const;
 		size_t readProfileMap(uint16_t number_of_profiles, size_t offset);
 		size_t readTypeMap(uint16_t number_of_types, size_t offset);
 
