@@ -82,6 +82,6 @@ namespace SCFG
 		size_t readProfileMap(uint16_t number_of_profiles, size_t offset);
 		size_t readTypeMap(uint16_t number_of_types, size_t offset);
 
-		void checkTypeSize(std::string_view field_name, size_t field_size);
+		void checkTypeSize(std::string_view field_name, size_t field_size) const;
 	};
 }

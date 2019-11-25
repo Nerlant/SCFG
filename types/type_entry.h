@@ -7,11 +7,11 @@ namespace SCFG
 	class TypeEntryBase
 	{
 	public:
-		explicit TypeEntryBase(const uint16_t size)
+		explicit TypeEntryBase(const uint16_t size) noexcept
 			: size(size)
 		{}
 
-		[[nodiscard]] uint16_t GetSize() const
+		[[nodiscard]] uint16_t GetSize() const noexcept
 		{
 			return size;
 		}

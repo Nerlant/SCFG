@@ -171,7 +171,7 @@ size_t SCFG::SCFG::readTypeMap(const uint16_t number_of_types, size_t offset)
  * \throws SizeMismatchException if field_size does not match.
  * \throws InvalidFieldNameException if field_name does not exist.
  */
-void SCFG::SCFG::checkTypeSize(const std::string_view field_name, const size_t field_size)
+void SCFG::SCFG::checkTypeSize(const std::string_view field_name, const size_t field_size) const
 {
 	const auto pair = typeMap.find(field_name);
 	if (pair == typeMap.end())
