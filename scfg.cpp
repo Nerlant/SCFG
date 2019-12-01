@@ -79,17 +79,10 @@ size_t SCFG::SCFG::writeProfileMap(size_t offset, uint32_t profile_offset)
 		fm.Write(offset, profile_offset);
 		offset += sizeof profile_offset;
 
-		profile_offset += static_cast<uint32_t>(writeProfile(profile_offset, profile));
+		profile_offset += static_cast<uint32_t>(profile.Save(profile_offset));
 	}
 
 	return offset;
-}
-
-size_t SCFG::SCFG::writeProfile(const size_t offset, const Profile& profile)
-{
-	const auto profileData = profile.GetData();
-	fm.Write(offset, profileData.data(), profileData.size());
-	return profileData.size();
 }
 
 size_t SCFG::SCFG::writeTypeMap(size_t offset)
@@ -104,8 +97,14 @@ size_t SCFG::SCFG::writeTypeMap(size_t offset)
 		fm.Write(offset, name.data(), entryName.size() + sizeof(char));
 		offset += entryName.size() + sizeof(char);
 		
-		fm.Write<uint32_t>(offset, val);
-		offset += sizeof val;
+		fm.Write<uint32_t>(offset, val.Size);
+		offset += sizeof val.Size;
+
+		fm.Write<uint32_t>(offset, val.FileOffset);
+		offset += sizeof val.FileOffset;
+
+		fm.Write<uint32_t>(offset, val.FileSize);
+		offset += sizeof val.FileSize;
 	}
 
 	return offset;
@@ -154,11 +153,17 @@ size_t SCFG::SCFG::readTypeMap(const uint16_t number_of_types, size_t offset)
 		const auto typeSize = fm.Read<uint32_t>(offset);
 		offset += sizeof typeSize;
 
+		const auto fileOffset = fm.Read<uint32_t>(offset);
+		offset += sizeof fileOffset;
+
+		const auto fileSize = fm.Read<uint32_t>(offset);
+		offset += sizeof fileSize;
+
 		// Store type name and type length to be able to later detect type mismatches
 		if (typeMap.contains(name))
 			throw Exception::DuplicateFieldNameException(name);
 
-		typeMap.emplace(name, typeSize);
+		typeMap.emplace(name, FieldInfo(typeSize, fileOffset, fileSize));
 	}
 
 	return offset;
@@ -176,6 +181,6 @@ void SCFG::SCFG::checkTypeSize(const std::string_view field_name, const size_t f
 	const auto pair = typeMap.find(field_name);
 	if (pair == typeMap.end())
 		throw Exception::InvalidFieldNameException(std::string(field_name));
-	if (pair->second != field_size)
+	if (pair->second.Size != field_size)
 		throw Exception::SizeMismatchException();
 }

@@ -12,7 +12,13 @@ std::vector<char> SCFG::Type::SaveType<int>(const int& value)
 }
 
 template <>
-int SCFG::Type::LoadType<int>(const char* data)
+int SCFG::Type::LoadType<int>(const char* data) noexcept
 {
 	return *reinterpret_cast<const int*>(data);
+}
+
+template<>
+uint32_t SCFG::Type::GetTypeSize<int>() noexcept
+{
+	return 4;
 }

@@ -13,6 +13,9 @@ namespace SCFG::Type
 
 	template <class T>
 	using LoadType_t = std::function<T(const char*)>;
+
+	template <class T>
+	using GetTypeSize_t = std::function<uint32_t()>;
 	
 	template<class T>
 	std::vector<char> SaveType(const T& value)
@@ -22,6 +25,12 @@ namespace SCFG::Type
 
 	template<class T>
 	T LoadType(const char* data)
+	{
+		throw Exception::NotImplementedException();
+	}
+
+	template<class T>
+	uint32_t GetTypeSize()
 	{
 		throw Exception::NotImplementedException();
 	}

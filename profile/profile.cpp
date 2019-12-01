@@ -3,21 +3,22 @@
 #include "../file_manager/file_manager.h"
 
 
-SCFG::Profile::Profile(const size_t file_offset, const FileManager& file_manager, const std::map<std::string, uint32_t, std::less<>>& type_map)
+SCFG::Profile::Profile(const size_t file_offset, FileManager& file_manager, const std::map<std::string, FieldInfo, std::less<>>& type_map)
 	: fileOffset(file_offset), fileManager(file_manager), typeMap(type_map)
 {
 }
 
-std::vector<char> SCFG::Profile::GetData() const
+size_t SCFG::Profile::Save(const size_t offset) const
 {
-	std::vector<char> data;
-	for (const auto& [key, valueContainer] : valueMap)
+	for (const auto& [name, value] : valueMap)
 	{
-		const auto currentData = valueContainer->Save();
-		data.insert(data.end(), 
-			std::make_move_iterator(currentData.begin()), 
-			std::make_move_iterator(currentData.end()));
+		if (const auto typeEntry = typeMap.find(name); typeEntry != typeMap.end())
+		{
+			fileManager.Write(offset + typeEntry->second.FileOffset, value->Save().data(), typeEntry->second.FileSize);
+		}
+		// TODO: handle 'else' branch, throw exception?
 	}
 
-	return data;
+	const auto lastTypeInfo = typeMap.rbegin()->second;
+	return offset + lastTypeInfo.FileOffset + lastTypeInfo.FileSize;
 }

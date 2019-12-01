@@ -12,12 +12,23 @@
 
 
 namespace SCFG
-{	
+{
+	struct FieldInfo
+	{
+		explicit FieldInfo(const uint32_t size, const uint32_t file_offset, const uint32_t file_size) noexcept :
+			Size(size), FileOffset(file_offset), FileSize(file_size)
+		{}
+		
+		uint32_t Size;
+		uint32_t FileOffset;
+		uint32_t FileSize;
+	};
+	
 	class Profile
 	{
 		// Needs to contain all the settings
 	public:
-		explicit Profile(size_t file_offset, const FileManager& file_manager, const std::map<std::string, uint32_t, std::less<>>& type_map);
+		explicit Profile(size_t file_offset, FileManager& file_manager, const std::map<std::string, FieldInfo, std::less<>>& type_map);
 
 		template <class T>
 		T GetValueByName(const std::string_view name)
@@ -37,41 +48,30 @@ namespace SCFG
 		template <class T>
 		bool SetValue(const std::string_view name, const T& value)
 		{
-			return valueMap.emplace(name, std::make_shared<ValueContainer<T>>(value)).second;
+			return valueMap.insert_or_assign(std::string(name), std::make_shared<ValueContainer<T>>(value)).second;
 		}
 
-		[[nodiscard]] std::vector<char> GetData() const;
+		[[nodiscard]] size_t Save(size_t offset) const;
 
 	private:
 		std::map <std::string, std::shared_ptr<ValueContainerBase>, std::less<>> valueMap;
 		size_t fileOffset;
-		const FileManager& fileManager;
-		const std::map<std::string, uint32_t, std::less<>>& typeMap;
+		FileManager& fileManager;
+		const std::map<std::string, FieldInfo, std::less<>>& typeMap;
 
 		template <class T>
 		bool getFieldFromCfg(const std::string_view name)
 		{
-			auto fieldFileOffset = fileOffset;
-			size_t fieldFileSize = 0;
-			for (const auto& [curName, size] : typeMap)
+			if (const auto it = typeMap.find(name); it != typeMap.end())
 			{
-				if (curName == name)
-				{
-					fieldFileSize = size;
-					break;
-				}
+				const auto fieldData = fileManager.Read(it->second.FileOffset, it->second.FileSize);
+				T value;
+				std::memcpy(&value, fieldData.data(), it->second.FileSize);
 
-				fieldFileOffset += size;
+				return SetValue(name, value);
 			}
 
-			if (!fieldFileSize)
-				throw Exception::InvalidFieldNameException(std::string(name));
-
-			const auto fieldData = fileManager.Read(fieldFileOffset, fieldFileSize);
-			T value;
-			std::memcpy(&value, fieldData.data(), fieldFileSize);
-
-			return SetValue(name, value);
+			throw Exception::InvalidFieldNameException(std::string(name));
 		}
 	};
 }

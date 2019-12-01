@@ -29,7 +29,7 @@ namespace SCFG
 		void SaveConfig();
 
 		template<class T>
-		T GetValueByName(const std::string_view name)
+		T GetValueByName(const std::string& name)
 		{
 			try
 			{
@@ -41,7 +41,7 @@ namespace SCFG
 			{
 				// Insert new value in all profiles
 				for (auto& [key, profile] : profileMap)
-					profile.SetValue<T>(name, T{});
+					SetValue(name, T());
 
 				return T{};
 			}
@@ -59,7 +59,10 @@ namespace SCFG
 			
 			if (profileMap.at(currentProfile).SetValue<T>(key, value))
 			{
-				typeMap.emplace(key, static_cast<uint32_t>(sizeof(T)));
+				const auto lastFieldInfo = typeMap.rbegin()->second;
+				typeMap.emplace(key, FieldInfo(static_cast<uint32_t>(sizeof(T)),
+				                               lastFieldInfo.FileOffset + lastFieldInfo.FileSize,
+				                               Type::GetTypeSize<T>()));
 				
 				// Insert new key with default value into all profiles
 				for (auto& [profileName, profile] : profileMap)
@@ -68,14 +71,13 @@ namespace SCFG
 		}
 
 	private:
-		std::map<std::string, uint32_t, std::less<>> typeMap;
+		std::map<std::string, FieldInfo, std::less<>> typeMap;
 		std::unordered_map<std::string, Profile> profileMap;
 		FileManager fm;
 		std::string currentProfile;
 
 		void writeHeader();
 		size_t writeProfileMap(size_t offset, uint32_t profile_offset);
-		size_t writeProfile(size_t offset, const Profile& profile);
 		size_t writeTypeMap(size_t offset);
 
 		[[nodiscard]] std::unique_ptr<Header> loadHeader() const;
