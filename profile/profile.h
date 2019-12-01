@@ -12,7 +12,7 @@
 
 
 namespace SCFG
-{
+{	
 	class Profile
 	{
 		// Needs to contain all the settings
@@ -69,7 +69,7 @@ namespace SCFG
 
 			const auto fieldData = fileManager.Read(fieldFileOffset, fieldFileSize);
 			T value;
-			std::copy(fieldData.begin(), fieldData.end(), &value);
+			std::memcpy(&value, fieldData.data(), fieldFileSize);
 
 			return SetValue(name, value);
 		}

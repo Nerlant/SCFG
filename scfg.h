@@ -77,8 +77,8 @@ namespace SCFG
 		size_t writeProfileMap(size_t offset, uint32_t profile_offset);
 		size_t writeProfile(size_t offset, const Profile& profile);
 		size_t writeTypeMap(size_t offset);
-		
-		std::unique_ptr<Header> loadHeader() const;
+
+		[[nodiscard]] std::unique_ptr<Header> loadHeader() const;
 		size_t readProfileMap(uint16_t number_of_profiles, size_t offset);
 		size_t readTypeMap(uint16_t number_of_types, size_t offset);
 

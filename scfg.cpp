@@ -16,7 +16,7 @@ SCFG::SCFG::SCFG(const std::string_view path) : fm(path) // TODO: add bool to cr
 	
 	// read first profile, if none exists, create a default one
 
-	currentProfile = "est12";
+	currentProfile = "test123";
 }
 
 SCFG::SCFG::~SCFG()
