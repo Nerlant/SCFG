@@ -64,7 +64,7 @@ namespace SCFG
 		{
 			if (const auto it = typeMap.find(name); it != typeMap.end())
 			{
-				const auto fieldData = fileManager.Read(it->second.FileOffset, it->second.FileSize);
+				const auto fieldData = fileManager.Read(fileOffset + it->second.FileOffset, it->second.FileSize);
 				T value;
 				std::memcpy(&value, fieldData.data(), it->second.FileSize);
 

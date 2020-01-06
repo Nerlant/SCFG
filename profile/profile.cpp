@@ -16,7 +16,10 @@ size_t SCFG::Profile::Save(const size_t offset) const
 		{
 			fileManager.Write(offset + typeEntry->second.FileOffset, value->Save().data(), typeEntry->second.FileSize);
 		}
-		// TODO: handle 'else' branch, throw exception?
+		else
+		{
+			throw Exception::InvalidFieldNameException(name);
+		}
 	}
 
 	const auto lastTypeInfo = typeMap.rbegin()->second;

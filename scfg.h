@@ -3,6 +3,7 @@
 #include "file_manager/file_manager.h"
 #include "profile/profile.h"
 #include "header.h"
+#include "types/type_includes.h"
 
 #include <unordered_map>
 #include <string_view>
