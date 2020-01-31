@@ -67,7 +67,11 @@ namespace SCFG
 				
 				// Insert new key with default value into all profiles
 				for (auto& [profileName, profile] : profileMap)
+				{
+					if (profileName == currentProfile)
+						continue;
 					profile.SetValue(key, T{});
+				}
 			}
 		}
 
