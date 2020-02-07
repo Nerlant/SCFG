@@ -9,7 +9,7 @@ namespace SCFG::Type
 {
 	template<> std::vector<char> SaveType(const int& value);
 
-	template<> int LoadType(const char* data) noexcept;
+	template<> int LoadType(const char* data);
 
-	template<> uint32_t GetTypeSize<int>() noexcept;
+	template<> uint32_t GetTypeSize<int>();
 }

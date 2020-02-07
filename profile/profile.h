@@ -9,6 +9,7 @@
 #include <string_view>
 #include <string>
 #include <map>
+#include <cstring>
 
 
 namespace SCFG
