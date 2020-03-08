@@ -14,9 +14,12 @@ SCFG::SCFG::SCFG(const std::string_view path) : fm(path) // TODO: add bool to cr
 
 	LoadConfig();
 	
-	// read first profile, if none exists, create a default one
+	// set first profile, if none exists, create a default one
 
-	currentProfile = "test123";
+	if (!profileMap.empty())
+		currentProfile = profileMap.begin()->first;
+	else
+		profileMap.emplace("default", Profile(0, fm, typeMap));		
 }
 
 SCFG::SCFG::~SCFG()
